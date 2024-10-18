@@ -1,0 +1,8 @@
+.env
+dist
+node_modules
+.nyc_output
+*.log
+
+test.js
+app.js

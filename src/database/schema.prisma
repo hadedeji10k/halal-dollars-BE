@@ -1,0 +1,280 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GENDER {
+  MALE
+  FEMALE
+}
+
+enum ROLE {
+  ADMIN
+  USER
+}
+
+model User {
+  id                  String           @id @default(uuid())
+  firstName           String           @db.VarChar(255)
+  lastName            String           @db.VarChar(255)
+  phone               String?          @unique
+  email               String           @unique
+  ninNumber           String?          @unique
+  bvnNumber           String?          @unique
+  password            String
+  country             String?
+  bio                 String?
+  username            String?
+  avatar              String?          @default("")
+  address             String?
+  role                ROLE?            @default(value: USER)
+  dateOfBirth         DateTime?
+  joinedAt            DateTime         @default(now())
+  isPhoneVerified     Boolean          @default(false)
+  isEmailVerified     Boolean          @default(false)
+  isVerified          Boolean          @default(false)
+  isProfileCompleted  Boolean          @default(false)
+  isSuspended         Boolean          @default(false)
+  referrerCode        String? // this determines if the user was referred to halal-dollars
+  referralCode        String?
+  transactionPin      String?
+  lastLogin           DateTime?
+  createdAt           DateTime?        @default(now()) @map("created_at")
+  updatedAt           DateTime?        @updatedAt @map("updated_at")
+  PinVerification     PinVerification?
+  Wallet              Wallet?
+  Notification        Notification[]
+  totalReach          TotalReach?
+  BankBeneficiary     Beneficiary[]
+  referrerAffiliation Affiliation[]    @relation("ReferrerAffiliations")
+  userAffiliation     Affiliation?     @relation("UserAffiliation")
+  Transaction         Transaction[]
+  UserCard            UserCard[]
+  UserMudaarabah      UserMudaarabah[]
+  FutureWealth        FutureWealth[]
+  Subsidiary          Subsidiary[]
+
+  @@map("user")
+}
+
+model PinVerification {
+  id       String   @id @default(uuid())
+  code     String   @db.VarChar(10)
+  validity DateTime @db.Timestamptz(6)
+  valid    Boolean
+  type     String?
+  userId   String?  @unique
+  user     User?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("pin_verification")
+}
+
+model AdminConfig {
+  id        String    @id @default(uuid())
+  key       String    @unique @db.VarChar
+  value     String    @db.VarChar
+  isDeleted Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("admin_config")
+}
+
+model Wallet {
+  id        String  @id @default(uuid())
+  amount    Decimal @default(0)
+  isDeleted Boolean @default(false) @map("is_deleted")
+  userId    String? @unique @map("user_id")
+  user      User?   @relation(fields: [userId], references: [id])
+
+  @@map("wallet")
+}
+
+model Notification {
+  id        String  @id @default(uuid())
+  title     String  @db.VarChar
+  message   String  @db.VarChar
+  isRead    Boolean @default(false) @map("is_read")
+  isDeleted Boolean @default(false) @map("is_deleted")
+  userId    String? @unique @map("user_id")
+  user      User?   @relation(fields: [userId], references: [id])
+
+  @@map("notification")
+}
+
+model TotalReach {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id])
+  startDate  DateTime?
+  expiryDate DateTime?
+  isActive   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model UserMudaarabah {
+  id         String       @id @default(uuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  label      String
+  isActive   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Mudaarabah Mudaarabah[]
+
+  @@map("user_mudaarabah")
+}
+
+model Mudaarabah {
+  id                   String         @id @default(uuid())
+  firstPaymentDate     DateTime?      @map("first_payment_date")
+  totalAmountInvested  Decimal        @default(0)
+  totalAmountWithdrawn Decimal        @default(0)
+  currentProfit        Decimal        @default(0)
+  totalProfit          Decimal        @default(0)
+  amountInIncubation   Decimal        @default(0)
+  isActive             Boolean        @default(false)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  userMudaarabahId     String         @map("user_mudaarabah_id")
+  userMudaarabah       UserMudaarabah @relation(fields: [userMudaarabahId], references: [id])
+}
+
+model Subsidiary {
+  id           String         @id @default(uuid())
+  name         String
+  description  String
+  relationship String
+  isActive     Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  userId       String         @map("user_id")
+  user         User           @relation(fields: [userId], references: [id])
+  FutureWealth FutureWealth[]
+
+  @@map("subsidiary")
+}
+
+model FutureWealth {
+  id                   String     @id @default(uuid())
+  firstPaymentDate     DateTime?  @map("first_payment_date")
+  minimumAmount        Decimal    @default(0)
+  totalAmountWithdrawn Decimal    @default(0)
+  currentProfit        Decimal    @default(0)
+  totalProfit          Decimal    @default(0)
+  totalAmount          Decimal    @default(0)
+  isActive             Boolean    @default(false)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  userId               String     @map("user_id")
+  user                 User       @relation(fields: [userId], references: [id])
+  subsidiaryId         String     @map("subsidiary_id")
+  subsidiary           Subsidiary @relation(fields: [subsidiaryId], references: [id])
+
+  @@map("future_wealth")
+}
+
+model Transaction {
+  id            String             @id @unique @default(uuid()) // this ID will be used for tracking any transaction also with paystack
+  amount        Decimal
+  status        TransactionStatus? @default(PENDING)
+  type          TransactionType?
+  title         String?
+  description   String?
+  chargedAmount Decimal?           @map("charged_amount")
+  cardTxIdRef   String?            @map("card_tx_id_ref")
+  cardTxId      String?            @map("card_tx_id")
+  createdAt     DateTime           @default(now())
+  beneficiaryId String?            @map("beneficiary_id")
+  beneficiary   Beneficiary?       @relation(fields: [beneficiaryId], references: [id])
+  userId        String             @map("user_id")
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Beneficiary {
+  id            String        @id @default(uuid())
+  alias         String?       @map("alias") @db.VarChar
+  accountNumber String        @map("account_number") @db.VarChar
+  accountName   String        @map("account_name") @db.VarChar
+  bankCode      String        @map("bank_code") @db.VarChar
+  bankName      String?       @map("bank_name") @db.VarChar
+  recipientCode String?       @map("recipient_code") @db.VarChar // for paystack
+  userId        String        @map("user_id")
+  isDeleted     Boolean       @default(false) @map("is_deleted")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  deletedAt     DateTime?     @map("deleted_at")
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Transaction   Transaction[]
+
+  @@map("beneficiary")
+}
+
+model Affiliation {
+  id                     String                   @id @default(uuid())
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
+  deletedAt              DateTime?                @map("deleted_at")
+  referrerId             String                   @map("referrer_id")
+  referrer               User                     @relation("ReferrerAffiliations", fields: [referrerId], references: [id], onDelete: Cascade)
+  userId                 String                   @unique @map("user_id") // Ensure a user is referred only once
+  user                   User                     @relation("UserAffiliation", fields: [userId], references: [id], onDelete: Cascade)
+  AffiliationTransaction AffiliationTransaction[]
+
+  @@map("affiliation")
+}
+
+model AffiliationTransaction {
+  id                   String               @id @unique @default(uuid())
+  amount               Decimal
+  status               TransactionStatus?   @default(PENDING)
+  type                 TransactionType?
+  affiliationBonusType AffiliationBonusType
+  createdAt            DateTime             @default(now())
+  affliationId         String               @map("affiliation_id")
+  affilation           Affiliation          @relation(fields: [affliationId], references: [id], onDelete: Cascade)
+
+  @@map("affiliation_transaction")
+}
+
+model UserCard {
+  id             String    @id @unique @default(uuid())
+  firstSixDigits String    @map("first_six_digits") @db.VarChar(6)
+  lastFourDigits String    @map("last_four_digits") @db.VarChar(4)
+  issuer         String?   @db.VarChar(200)
+  currency       String?   @db.VarChar(200)
+  type           String?   @db.VarChar(50)
+  token          String    @db.VarChar(50)
+  expiryDate     DateTime? @map("expiry_date") @db.Date
+  isPrimary      Boolean?  @default(false) @map("is_primary")
+  dateAdded      DateTime  @map("date_added") @db.Timestamptz(6)
+  userId         String    @map("user_id")
+  isDelete       Boolean?  @default(false) @map("is_delete")
+  user           User      @relation(fields: [userId], references: [id])
+
+  @@map("user_card")
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum AffiliationBonusType {
+  TOTALREACH
+  MUDAARABAH
+  FUTUREWEALTH
+}
