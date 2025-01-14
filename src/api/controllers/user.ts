@@ -49,8 +49,8 @@ export class UserController {
     const { user }: { [key: string]: any } = request;
 
     const data = {
-      currentDayStreak: user.currentDayStreak,
       joinedAt: user.createdAt,
+      referralCode: user.referralCode,
     };
 
     return response.success(reply, {
@@ -158,7 +158,7 @@ export class UserController {
 
     const data = await this.userService.updateUserPassword(payload, user);
     return response.success(reply, {
-      message: Message.userProfileUpdated,
+      message: Message.userPasswordUpdated,
       data,
     });
   }

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PinVerificationType, Prisma } from "@prisma/client";
 import { addMinutes } from "date-fns";
 import { Service } from "typedi";
 import { prisma } from "..";
@@ -83,25 +83,27 @@ export class User {
 
   async createOrUpdateVerificationCode(
     user: IUser,
-    type: "email" | "password" | "phone" | "pin",
+    type: PinVerificationType,
     code: string,
-    valid: boolean
+    valid: boolean,
+    validity?: Date
   ) {
     let data: any = {
       user: { connect: { id: user.id } },
       code,
-      validity: addMinutes(new Date(), 10),
+      validity: validity ?? addMinutes(new Date(), 10),
       valid,
+      type,
     };
 
     let updateData = {
       code,
-      validity: addMinutes(new Date(), 10),
+      validity: validity ?? addMinutes(new Date(), 10),
       valid,
     };
 
     const findUser = await prisma.pinVerification.findFirst({
-      where: { userId: user.id },
+      where: { userId: user.id, type },
     });
 
     if (findUser) {
@@ -114,17 +116,14 @@ export class User {
     }
   }
 
-  async findVerificationCode(
-    user: IUser,
-    type: "email" | "password" | "phone" | "pin"
-  ) {
+  async findVerificationCode(user: IUser, type: PinVerificationType) {
     let data: {
       code: string;
       valid: boolean;
       validity: Date;
     } | null = null;
     data = await prisma.pinVerification.findFirst({
-      where: { userId: user.id },
+      where: { userId: user.id, type },
     });
 
     return data;

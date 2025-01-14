@@ -38,8 +38,8 @@ export interface IEnvironment {
 
 export const environment: IEnvironment = {
   appStage: process.env.APP_STAGE || "DEV", // "DEV" | "PROD" | "TEST"
-  port: Number(process.env.PORT) || 6006,
-  host: process.env.HOST || "127.0.0.1",
+  port: Number(process.env.PORT) || 6009,
+  host: process.env.HOST || "0.0.0.0",
   isTestEnv: process.env.IS_TEST_ENV === "true" || false,
   secrets: {
     jwt:

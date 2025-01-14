@@ -20,6 +20,7 @@ export class Beneficiary {
       accountName: payload.accountName,
       bankName: payload.bankName,
       bankCode: payload.bankCode,
+      recipientCode: payload.recipientCode,
       user: {
         connect: {
           id: userId,

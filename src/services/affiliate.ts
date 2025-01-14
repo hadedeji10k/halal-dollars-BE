@@ -1,11 +1,23 @@
 import { Service } from "typedi";
-import { Affiliate } from "../database/repository";
+import { Affiliate, User } from "../database/repository";
 import { ICreateAffiliate, IUser } from "../interfaces";
-import { ApiError, Message } from "../utils";
+import { ApiError, generateOTP, Message } from "../utils";
 
 @Service()
 export class AffiliateService {
-  constructor(private readonly affiliation: Affiliate) {}
+  constructor(
+    private readonly affiliation: Affiliate,
+    private readonly user: User
+  ) {}
+
+  public async generateReferralCode(user: IUser) {
+    if (user.referralCode) {
+      throw new ApiError(Message.affiliateCodeAlreadyGenerated, 409);
+    }
+    const code = generateOTP({ type: "alphanum", length: 9 });
+    await this.user.updateUser({ id: user.id }, { referralCode: code });
+    return;
+  }
 
   public async createAffiliate(
     payload: ICreateAffiliate,

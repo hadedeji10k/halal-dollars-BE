@@ -169,7 +169,7 @@ export class PaystackTransactionService extends APIGateway {
       bank_code: data.bank_code,
       currency: "NGN",
     };
-    const response = await this.request(
+    const { data: response } = await this.request(
       methods.POST,
       `/transferrecipient`,
       {},
@@ -187,7 +187,7 @@ export class PaystackTransactionService extends APIGateway {
   }
 
   public async resolveBankAccount(accountNumber: string, bankCode: string) {
-    const response = await this.request(
+    const { data: response } = await this.request(
       methods.GET,
       `/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`
     );
@@ -197,14 +197,15 @@ export class PaystackTransactionService extends APIGateway {
   public async fetchBankList() {
     let banks: any[] = [];
     const getBankList = async () => {
-      const result = await this.request(methods.GET, "/bank?country=nigeria");
+      const { data: result } = await this.request(
+        methods.GET,
+        "/bank?country=nigeria"
+      );
       if (result.status) {
         banks.push(...result.data);
-        if (result.meta?.next !== null) {
-          await getBankList();
-        }
       }
     };
+    await getBankList();
     return banks;
   }
 }

@@ -15,7 +15,7 @@ function userAuth(options: IOptions = {}) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data: { id: string } = await request.jwtVerify();
-
+      console.log("Id>>>", data.id);
       const userId = String(data.id);
       const userExists = await user.findById(userId);
       if (!userExists) {

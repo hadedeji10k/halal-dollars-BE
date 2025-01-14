@@ -36,7 +36,7 @@ export class BeneficiaryService {
     }
 
     await this.beneficiary.createBeneficiary(
-      { ...payload, recipientCode: transaferRecipient.recipient_code },
+      { ...payload, recipientCode: transaferRecipient?.recipient_code },
       user.id
     );
     return;

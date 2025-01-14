@@ -17,6 +17,7 @@ import {
 import { Mailer } from "../utils/mailing";
 import { isFuture } from "date-fns";
 import { AffiliateService } from "./affiliate";
+import { PinVerificationType } from "@prisma/client";
 
 @Service()
 export class AuthService {
@@ -67,7 +68,7 @@ export class AuthService {
 
     await this.user.createOrUpdateVerificationCode(
       user,
-      "email",
+      PinVerificationType.EMAIL,
       otpCode,
       true
     );
@@ -75,7 +76,7 @@ export class AuthService {
     await this._sendEmailConfirmation(user, otpCode);
 
     return {
-      token: await jwt.sign({ id: Number(user.id) }),
+      token: await jwt.sign({ id: user.id }),
     };
   }
 
@@ -102,7 +103,7 @@ export class AuthService {
     }
 
     return {
-      token: await jwt.sign({ id: Number(user.id) }),
+      token: await jwt.sign({ id: user.id }),
     };
   }
 
@@ -110,14 +111,6 @@ export class AuthService {
     const user = await this.user.findByEmail(payload.email);
     if (!user) {
       throw new ApiError(Message.userNotFound, 401);
-    }
-
-    // if (!user.isEmailVerified) {
-    //   throw new ApiError(Message.userSuspended, 401);
-    // }
-
-    if (!user.email) {
-      throw new ApiError(Message.emailNotVerified, 403);
     }
 
     const isValidPassword = await password.verify(
@@ -131,7 +124,7 @@ export class AuthService {
     await this.user.updateUser({ id: user.id }, { lastLogin: new Date() });
 
     return {
-      token: await jwt.sign({ id: Number(user.id) }),
+      token: await jwt.sign({ id: user.id }),
     };
   }
 
@@ -144,7 +137,7 @@ export class AuthService {
     const otpCode = generateOTP({ type: "num", length: 6 });
     await this.user.createOrUpdateVerificationCode(
       user,
-      "password",
+      PinVerificationType.FORGOT_PASSWORD,
       otpCode,
       true
     );
@@ -169,7 +162,10 @@ export class AuthService {
       throw new ApiError(Message.userNotFound, 404);
     }
 
-    const codeDetails = await this.user.findVerificationCode(user, "password");
+    const codeDetails = await this.user.findVerificationCode(
+      user,
+      PinVerificationType.PASSWORD
+    );
 
     if (!isFuture(codeDetails?.validity || new Date())) {
       throw new ApiError(Message.otpExpired, 400);
@@ -196,7 +192,7 @@ export class AuthService {
     );
     await this.user.createOrUpdateVerificationCode(
       user,
-      "password",
+      PinVerificationType.FORGOT_PASSWORD,
       codeDetails?.code,
       false
     );
@@ -273,7 +269,10 @@ export class AuthService {
       throw new ApiError(Message.emailAlreadyConfirmed, 409);
     }
 
-    const codeDetails = await this.user.findVerificationCode(user, "email");
+    const codeDetails = await this.user.findVerificationCode(
+      user,
+      PinVerificationType.EMAIL
+    );
 
     if (!isFuture(codeDetails?.validity || new Date())) {
       throw new ApiError(Message.otpExpired, 400);
@@ -296,7 +295,7 @@ export class AuthService {
 
     await this.user.createOrUpdateVerificationCode(
       user,
-      "email",
+      PinVerificationType.EMAIL,
       codeDetails?.code,
       false
     );
@@ -307,7 +306,7 @@ export class AuthService {
       otpCode = generateOTP({ type: "num", length: 6 });
       await this.user.createOrUpdateVerificationCode(
         user,
-        "email",
+        PinVerificationType.EMAIL,
         otpCode,
         true
       );

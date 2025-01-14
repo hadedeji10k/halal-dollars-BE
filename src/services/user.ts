@@ -26,6 +26,7 @@ import { environment } from "../config/environment";
 import { addMinutes, isFuture, startOfDay } from "date-fns";
 import { dateInterval } from "../utils/dateInterval";
 import { Mailer } from "../utils/mailing";
+import { PinVerificationType } from "@prisma/client";
 
 @Service()
 export class UserService {
@@ -232,7 +233,12 @@ export class UserService {
     }
 
     const otpCode = generateOTP({ type: "num", length: 6 });
-    await this.user.createOrUpdateVerificationCode(user, "pin", otpCode, true);
+    await this.user.createOrUpdateVerificationCode(
+      user,
+      PinVerificationType.TRANSACTION_PIN,
+      otpCode,
+      true
+    );
 
     const options: EmailOptions = {
       recipient: user.email,
@@ -250,7 +256,10 @@ export class UserService {
     payload: IForgotPinReset,
     user: IUser
   ) {
-    const codeDetails = await this.user.findVerificationCode(user, "pin");
+    const codeDetails = await this.user.findVerificationCode(
+      user,
+      PinVerificationType.TRANSACTION_PIN
+    );
 
     if (!isFuture(codeDetails?.validity || new Date())) {
       throw new ApiError(Message.otpExpired, 400);
@@ -267,7 +276,7 @@ export class UserService {
     await this.user.createOrUpdateTransactionPin(user, payload.pin);
     await this.user.createOrUpdateVerificationCode(
       user,
-      "pin",
+      PinVerificationType.TRANSACTION_PIN,
       codeDetails?.code,
       false
     );
@@ -308,7 +317,7 @@ export class UserService {
 
   public async getCurrentUser(user: IUser) {
     const data = {
-      id: Number(user.id),
+      id: user.id,
       avatar: user.avatar,
       dateJoined: user.joinedAt,
       email: user.email,

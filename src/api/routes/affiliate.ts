@@ -6,6 +6,13 @@ import { auth } from "../middleware";
 export async function affiliate(app: FastifyInstance) {
   const controller = Container.get(AffiliateController);
 
+  app.post(
+    "/generate",
+    {
+      onRequest: [auth.user()],
+    },
+    controller.generateAffiliateCode.bind(controller)
+  );
   app.get(
     "/",
     {

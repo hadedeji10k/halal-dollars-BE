@@ -27,7 +27,8 @@ app.setErrorHandler((error, _request, reply) => {
   Sentry.captureException(error);
 
   if (error.validation && error.validation[0]) {
-    error.message = error.validation[0].message!;
+    let validationMessage = error.validation.map((item) => item.message);
+    error.message = validationMessage.join(" | ");
   }
 
   return response.error(reply, {

@@ -46,8 +46,12 @@ export default class APIGateway {
         return res;
       })
       .catch((err) => {
-        console.log("Err>>", err);
-        throw new ApiError(Message.internalServerError, 500);
+        console.log("Err>>", err?.code, err?.response?.status);
+        const msg =
+          err?.response?.status === 422 || err?.code === "ERR_BAD_REQUEST"
+            ? Message.wrongParameters
+            : Message.internalServerError;
+        throw new ApiError(msg, err?.response?.status || 500);
       });
   }
 }

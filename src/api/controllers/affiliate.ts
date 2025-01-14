@@ -7,6 +7,19 @@ import { AffiliateService } from "../../services";
 export class AffiliateController {
   constructor(private readonly affiliateService: AffiliateService) {}
 
+  public async generateAffiliateCode(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const { user }: { [key: string]: any } = request;
+
+    const data = await this.affiliateService.generateReferralCode(user);
+    return response.success(reply, {
+      message: Message.affiliateCodeGenerated,
+      data,
+    });
+  }
+
   public async getUserAffiliates(request: FastifyRequest, reply: FastifyReply) {
     const { user }: { [key: string]: any } = request;
 
